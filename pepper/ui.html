@@ -908,6 +908,10 @@
                     eventClass = 'llm-thinking';
                     eventLabel = 'LLM THINKING';
                     break;
+                case 'llm_thinking_end':
+                    eventClass = 'llm-thinking';
+                    eventLabel = 'LLM DONE';
+                    break;
                 case 'send_to_user':
                     eventClass = 'send-to-user';
                     eventLabel = 'SEND TO USER';
@@ -1155,6 +1159,12 @@ ${dataStr}
                         const contextData = data.data;
                         if (contextData && contextData.context && contextData.context.data) {
                             displayDebugEntry(contextData.context.data);
+                            const evt = contextData.context.data;
+                            if (evt && evt.event_type === 'llm_thinking') {
+                                showTypingIndicator();
+                            } else if (evt && (evt.event_type === 'llm_thinking_end' || evt.event_type === 'send_to_user')) {
+                                hideTypingIndicator();
+                            }
                         }
                     } else if (data.type === 'error') {
                         console.error('❌ Debug WebSocket server error:', data.message);

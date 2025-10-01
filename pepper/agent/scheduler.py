@@ -212,9 +212,15 @@ http://localhost:5050/pepper/ui.html""")
             {"role": "user", "content": self.state_tracker.user_prompt},
         ]
 
+        # Signal UI via context store: LLM is starting to think/generate
+        await self.log_debug("llm_thinking", {"source": "scheduler_step"})
+
         response: AssistantMessage = await create_completion(
             messages, MODEL, 8000, 1, self.tools, name="scheduler_step"
         )
+
+        # Signal UI via context store: LLM finished thinking/generating
+        await self.log_debug("llm_thinking_end", {"source": "scheduler_step"})
 
         # Phase 3: Process response
         if response.content:
