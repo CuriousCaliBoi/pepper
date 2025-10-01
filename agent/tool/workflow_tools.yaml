@@ -1,0 +1,21 @@
+servers:
+  - name: "tool-reading"
+    command: "python"
+    args: ["-m", "pepper.tool.mcp_servers.reading_mcp_server"]
+    env: {}
+  - name: "tool-searching"
+    command: "python"
+    args: ["-m", "pepper.tool.mcp_servers.searching_mcp_server"]
+    env:
+      SERPER_API_KEY: "${env:SERPER_API_KEY}"
+      JINA_API_KEY: "${env:JINA_API_KEY}"
+  - name: "tool-composio"
+    command: "python"
+    args: ["-m", "pepper.tool.mcp_servers.composio_mcp_server"]
+    env:
+      COMPOSIO_API_KEY: "${env:COMPOSIO_API_KEY}"
+  - name: "tool-worker"
+    command: "python"
+    args: ["-m", "pepper.tool.mcp_servers.worker_mcp_server"]
+    env:
+      OPENAI_API_KEY: "${env:OPENAI_API_KEY}"

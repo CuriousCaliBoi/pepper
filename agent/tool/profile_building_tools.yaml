@@ -1,0 +1,7 @@
+servers:
+  - name: "tool-composio"
+    command: "python"
+    args: ["-m", "pepper.tool.mcp_servers.composio_mcp_server"]
+    env:
+      COMPOSIO_API_KEY: "${env:COMPOSIO_API_KEY}"
+      

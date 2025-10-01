@@ -1,0 +1,25 @@
+servers:
+  - name: "tool-reminder"
+    command: "python"
+    args: ["-m", "pepper.tool.mcp_servers.reminder_mcp_server"]
+    env:
+      REMINDER_BASE_URL: "${env:REMINDER_BASE_URL}"
+      REMINDER_API_KEY: "${env:REMINDER_API_KEY}"
+  - name: "tool-composio"
+    command: "python"
+    args: ["-m", "pepper.tool.mcp_servers.composio_mcp_server"]
+    env:
+      COMPOSIO_API_KEY: "${env:COMPOSIO_API_KEY}"
+  - name: "tool-searching"
+    command: "python"
+    args: ["-m", "pepper.tool.mcp_servers.searching_mcp_server"]
+    env:
+      SERPER_API_KEY: "${env:SERPER_API_KEY}"
+      JINA_API_KEY: "${env:JINA_API_KEY}"
+  - name: "tool-user-profile"
+    command: "python"
+    args: ["-m", "pepper.tool.mcp_servers.user_profile_mcp_server"]
+    env:
+      CONTEXT_STORE_ENDPOINT: "${env:CONTEXT_STORE_ENDPOINT}"
+      CONTEXT_STORE_API_KEY: "${env:CONTEXT_STORE_API_KEY}"
+      

@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pepper - Debug Mode</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --primary-hover: #5a6fd8;
+            --background-color: #f5f5f5;
+            --surface-color: #ffffff;
+            --text-primary: #1c1e21;
+            --text-secondary: #65676b;
+            --text-muted: #8a8d91;
+            --border-color: #dadde1;
+            --message-bg-incoming: #f0f0f0;
+            --message-bg-outgoing: #667eea;
+            --success-color: #42b883;
+            --warning-color: #e3c878;
+            --error-color: #ff6b6b;
+            --info-color: #5090D3;
+            --shadow-light: 0 1px 2px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 2px 8px rgba(0, 0, 0, 0.15);
+            --radius-small: 6px;
+            --radius-medium: 12px;
+            --radius-large: 18px;
+            --typing-animation-duration: 1.4s;
+            
+            /* Debug panel colors */
+            --debug-bg: #1e1e1e;
+            --debug-text: #d4d4d4;
+            --debug-border: #2d2d30;
+            --event-user: #569cd6;
+            --event-composio: #ce9178;
+            --event-tool: #dcdcaa;
+            --event-result: #4ec9b0;
+            --event-thinking: #c586c0;
+            --event-send: #608b4e;
+            --event-wait: #9aa0a6;
+            --debug-width: 500px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Main container centered layout */
+        .main-container {
+            display: flex;
+            height: 100vh;
+            gap: 0;
+            justify-content: center;
+        }
+
+        /* Chat Section - messenger style container */
+        .chat-section {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--surface-color);
+            box-shadow: var(--shadow-medium);
+            transition: margin-right 0.3s ease, max-width 0.3s ease;
+        }
+
+        .debug-open .chat-section {
+            margin-right: var(--debug-width);
+            max-width: clamp(320px, calc(100vw - var(--debug-width)), 800px);
+        }
+
+        /* Debug Section - slide-out drawer on the right */
+        .debug-section {
+            width: var(--debug-width);
+            display: flex;
+            flex-direction: column;
+            background-color: var(--debug-bg);
+            color: var(--debug-text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 2000;
+        }
+
+        .debug-section.open {
+            transform: translateX(0);
+        }
+
+        /* Chat Header */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-light);
+            z-index: 10;
+        }
+
+        .chat-header-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar-container {
+            position: relative;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .avatar.small {
+            width: 32px;
+            height: 32px;
+            font-size: 13px;
+        }
+
+        .online-indicator {
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 12px;
+            height: 12px;
+            background-color: var(--success-color);
+            border: 2px solid var(--surface-color);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(66, 184, 131, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(66, 184, 131, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(66, 184, 131, 0); }
+        }
+
+        .chat-title h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .toggle-debug {
+            padding: 8px 16px;
+            background-color: var(--debug-bg);
+            color: var(--debug-text);
+            border: 1px solid var(--debug-border);
+            border-radius: var(--radius-small);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-debug:hover {
+            background-color: #2d2d30;
+        }
+
+        /* Chat Messages Area */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: var(--background-color);
+            scroll-behavior: smooth;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .message-container {
+            display: flex;
+            margin-bottom: 16px;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .message-container.outgoing {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            max-width: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .outgoing .message-content {
+            align-items: flex-end;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: var(--radius-large);
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            position: relative;
+            white-space: pre-wrap;
+        }
+
+        .incoming .message-bubble {
+            background-color: var(--message-bg-incoming);
+            color: var(--text-primary);
+            border-bottom-left-radius: 6px;
+        }
+
+        .outgoing .message-bubble {
+            background-color: var(--message-bg-outgoing);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            margin-left: 4px;
+        }
+
+        .outgoing .message-time {
+            margin-left: 0;
+            margin-right: 4px;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        .typing-indicator.show {
+            display: block;
+        }
+
+        .typing-bubble {
+            background-color: var(--message-bg-incoming);
+            padding: 12px 16px;
+            border-radius: var(--radius-large);
+            border-bottom-left-radius: 6px;
+            display: inline-block;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background-color: var(--text-muted);
+            border-radius: 50%;
+            animation: typing var(--typing-animation-duration) infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        /* Message Input Area */
+        .chat-input {
+            padding: 16px 20px;
+            background-color: var(--surface-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            background-color: var(--background-color);
+            border-radius: 24px;
+            padding: 8px 8px 8px 16px;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.2s ease;
+        }
+
+        .input-container:focus-within {
+            border-color: var(--primary-color);
+        }
+
+        .message-input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .message-input-wrapper textarea {
+            flex: 1;
+            border: none;
+            background: transparent;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.4;
+            color: var(--text-primary);
+            outline: none;
+            max-height: 120px;
+            min-height: 20px;
+            padding: 6px 0;
+        }
+
+        .message-input-wrapper textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            background-color: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Suggestions */
+        .suggestions {
+            padding: 12px 20px;
+            background-color: var(--background-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .suggestions-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .suggestion-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .suggestion-button {
+            padding: 6px 12px;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            font-size: 12px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-button:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Debug Panel Styles */
+        .debug-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background-color: #252526;
+            border-bottom: 1px solid var(--debug-border);
+        }
+
+        .debug-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #cccccc;
+        }
+
+        .debug-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .debug-btn {
+            padding: 4px 8px;
+            background-color: transparent;
+            color: #cccccc;
+            border: 1px solid var(--debug-border);
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .debug-btn:hover {
+            background-color: #2d2d30;
+            border-color: #464647;
+        }
+
+        .debug-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .debug-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .debug-content::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        .debug-content::-webkit-scrollbar-thumb {
+            background-color: #424242;
+            border-radius: 4px;
+        }
+
+        .debug-entry {
+            margin-bottom: 12px;
+            padding: 8px;
+            background-color: #252526;
+            border-radius: 4px;
+            border-left: 3px solid;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .debug-entry.event-received {
+            border-left-color: var(--event-user);
+        }
+
+        .debug-entry.tool-call {
+            border-left-color: var(--event-tool);
+        }
+
+        .debug-entry.tool-result {
+            border-left-color: var(--event-result);
+        }
+
+        .debug-entry.llm-thinking {
+            border-left-color: var(--event-thinking);
+        }
+
+        .debug-entry.send-to-user {
+            border-left-color: var(--event-send);
+        }
+
+        .debug-entry.wait {
+            border-left-color: var(--event-wait);
+        }
+
+        .debug-entry.composio {
+            border-left-color: var(--event-composio);
+        }
+
+        .debug-time {
+            font-size: 11px;
+            color: #858585;
+            margin-bottom: 4px;
+        }
+
+        .debug-type {
+            font-weight: 500;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+
+        .debug-data {
+            color: #d4d4d4;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .debug-data.collapsed {
+            max-height: 50px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .debug-data.collapsed::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(transparent, #252526);
+        }
+
+        .expand-btn {
+            margin-top: 4px;
+            font-size: 11px;
+            color: #569cd6;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-medium);
+            padding: 8px 16px;
+            box-shadow: var(--shadow-medium);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .connection-status.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--error-color);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background-color: var(--success-color);
+        }
+
+        /* Hide debug section when toggled */
+        .main-container.debug-hidden .debug-section {
+            display: none;
+        }
+
+        .main-container.debug-hidden .chat-section {
+            border-right: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container" id="mainContainer">
+        <!-- Chat Section -->
+        <div class="chat-section">
+            <!-- Header -->
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="avatar-container">
+                        <div class="avatar">
+                            <span>🌶️</span>
+                            <div class="online-indicator" id="onlineIndicator"></div>
+                        </div>
+                    </div>
+                    <div class="chat-title">
+                        <h2>Pepper</h2>
+                        <p class="status-text" id="headerStatus">Connected</p>
+                    </div>
+                </div>
+                <button class="toggle-debug" id="toggleDebug" onclick="toggleDebugPanel()">
+                    Show Debug
+                </button>
+            </div>
+
+            <!-- Chat Messages Area -->
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will appear here -->
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="message-container incoming">
+                    <div class="message-avatar">
+                        <div class="avatar small">
+                            <span>🌶️</span>
+                        </div>
+                    </div>
+                    <div class="message-content">
+                        <div class="typing-bubble">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggestions -->
+            <div class="suggestions">
+                <div class="suggestions-title">Try asking:</div>
+                <div class="suggestion-buttons">
+                    <button class="suggestion-button" onclick="sendSuggestion('What do you know about me? Reply In detail.')">👤 My Profile</button>
+                    <button class="suggestion-button" onclick="sendSuggestion('Get top 5 of my most recent emails')">📧 Recent Emails</button>
+                    <button class="suggestion-button" onclick="sendSuggestion('Draft a test email to myself')">📝 Draft Email</button>
+                    <!-- <button class="suggestion-button" onclick="sendSuggestion('What\'s on my schedule today?')">📅 Today's Schedule</button> -->
+                    <!-- <button class="suggestion-button" onclick="sendSuggestion('Show my upcoming tasks')">✅ My Tasks</button> -->
+                    <button class="suggestion-button" onclick="sendSuggestion('Set a reminder to remind me to drink water in 2 minutes')">⏰ Set Reminder</button>
+                </div>
+            </div>
+
+            <!-- Message Input Area -->
+            <div class="chat-input">
+                <div class="input-container">
+                    <div class="message-input-wrapper">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Type a message..." 
+                            rows="1"
+                            maxlength="1000"></textarea>
+                    </div>
+                    <button class="send-btn" id="sendBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Section -->
+        <div class="debug-section">
+            <div class="debug-header">
+                <div class="debug-title">Pepper Debug Console</div>
+                <div class="debug-controls">
+                    <button class="debug-btn" onclick="clearDebugLog()">Clear</button>
+                    <button class="debug-btn" onclick="toggleAutoScroll()">Auto-scroll: ON</button>
+                </div>
+            </div>
+            <div class="debug-content" id="debugContent">
+                <!-- Debug entries will appear here -->
+            </div>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="connection-status" id="connectionStatus">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-text" id="statusText">Connecting...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - can be overridden via URL parameters or environment
+        function getConfig() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Try to get from URL parameters first, then fallback to defaults
+            const contextStoreUrl = urlParams.get('context_store_url') || 
+                                  window.CONTEXT_STORE_ENDPOINT || 
+                                  'http://localhost:8000';
+            
+            const apiKey = urlParams.get('api_key') || 
+                          window.CONTEXT_STORE_API_KEY || 
+                          'your-api-key-here';
+            
+            return {
+                contextStoreUrl,
+                apiKey
+            };
+        }
+        
+        // Convert HTTP/HTTPS URL to WebSocket URL
+        function getWebSocketUrl(httpUrl) {
+            try {
+                const url = new URL(httpUrl);
+                // Convert protocol: http -> ws, https -> wss
+                const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+                return `${wsProtocol}//${url.host}`;
+            } catch (error) {
+                console.error('Invalid context store URL:', httpUrl, error);
+                // Fallback to localhost
+                return 'ws://localhost:8000';
+            }
+        }
+        
+        const config = getConfig();
+        const CONTEXT_STORE_URL = config.contextStoreUrl;
+        const WEBSOCKET_BASE_URL = getWebSocketUrl(CONTEXT_STORE_URL);
+        const API_KEY = config.apiKey;
+        
+        console.log('Configuration:', {
+            contextStoreUrl: CONTEXT_STORE_URL,
+            websocketBaseUrl: WEBSOCKET_BASE_URL,
+            apiKey: API_KEY ? '***' : 'not set'
+        });
+        
+        let isConnected = false;
+        let chatWs = null;
+        let debugWs = null;
+        let reconnectTimeout = null;
+        let debugAutoScroll = true;
+        let debugPanelVisible = false;
+
+        // Toggle debug panel visibility
+        function toggleDebugPanel() {
+            debugPanelVisible = !debugPanelVisible;
+            const debugPanel = document.querySelector('.debug-section');
+            const toggleBtn = document.getElementById('toggleDebug');
+            if (debugPanelVisible) {
+                debugPanel.classList.add('open');
+                document.body.classList.add('debug-open');
+                toggleBtn.textContent = 'Hide Debug';
+            } else {
+                debugPanel.classList.remove('open');
+                document.body.classList.remove('debug-open');
+                toggleBtn.textContent = 'Show Debug';
+            }
+        }
+
+        // Clear debug log
+        function clearDebugLog() {
+            document.getElementById('debugContent').innerHTML = '';
+        }
+
+        // Toggle auto-scroll
+        function toggleAutoScroll() {
+            debugAutoScroll = !debugAutoScroll;
+            const btn = event.target;
+            btn.textContent = `Auto-scroll: ${debugAutoScroll ? 'ON' : 'OFF'}`;
+        }
+
+        // Display message in chat
+        function displayMessage(message, type) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-container ${type}`;
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar small';
+            
+            const avatarText = document.createElement('span');
+            
+            if (type === 'outgoing') {
+                avatarText.textContent = 'You';
+                avatar.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+            } else {
+                avatarText.textContent = '🌶️';
+            }
+            
+            avatar.appendChild(avatarText);
+            avatarDiv.appendChild(avatar);
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            bubbleDiv.textContent = message;
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            contentDiv.appendChild(bubbleDiv);
+            contentDiv.appendChild(timeDiv);
+            
+            if (type !== 'system') {
+                messageDiv.appendChild(avatarDiv);
+            }
+            messageDiv.appendChild(contentDiv);
+            messagesDiv.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Display debug entry
+        function displayDebugEntry(data) {
+            const debugContent = document.getElementById('debugContent');
+            const entry = document.createElement('div');
+            
+            // Determine event type and styling
+            let eventClass = '';
+            let eventLabel = '';
+            
+            switch (data.event_type) {
+                case 'event_received':
+                    if (data.data.type === 'composio') {
+                        eventClass = 'composio';
+                        eventLabel = 'COMPOSIO EVENT';
+                    } else if (data.data.type === 'important_email') {
+                        eventClass = 'composio';  // Use same styling as composio
+                        eventLabel = 'IMPORTANT EMAIL';
+                    } else if (data.data.type === 'user_message') {
+                        eventClass = 'event-received';
+                        eventLabel = 'USER MESSAGE';
+                    } else {
+                        eventClass = 'event-received';
+                        eventLabel = data.data.type ? data.data.type.toUpperCase().replace('_', ' ') : 'EVENT RECEIVED';
+                    }
+                    break;
+                case 'tool_call_start':
+                    eventClass = 'tool-call';
+                    eventLabel = 'TOOL CALL';
+                    break;
+                case 'tool_call_result':
+                    eventClass = 'tool-result';
+                    eventLabel = 'TOOL RESULT';
+                    break;
+                case 'llm_thinking':
+                    eventClass = 'llm-thinking';
+                    eventLabel = 'LLM THINKING';
+                    break;
+                case 'send_to_user':
+                    eventClass = 'send-to-user';
+                    eventLabel = 'SEND TO USER';
+                    break;
+                case 'wait':
+                    eventClass = 'wait';
+                    eventLabel = 'WAIT';
+                    break;
+                case 'duplicate_blocked':
+                    eventClass = 'event-received';
+                    eventLabel = 'DUPLICATE BLOCKED';
+                    break;
+                default:
+                    eventClass = 'event-received';
+                    eventLabel = data.event_type.toUpperCase();
+            }
+            
+            entry.className = `debug-entry ${eventClass}`;
+            
+            // Format the debug data
+            let dataStr = JSON.stringify(data.data, null, 2);
+            const isLong = dataStr.length > 200;
+            
+            entry.innerHTML = `
+                <div class="debug-time">${new Date(data.timestamp * 1000).toLocaleTimeString()}</div>
+                <div class="debug-type" style="color: var(--event-${eventClass.split('-')[0]})">${eventLabel}</div>
+                <div class="debug-data ${isLong ? 'collapsed' : ''}" id="data-${data.timestamp}">
+${dataStr}
+                </div>
+                ${isLong ? `<div class="expand-btn" onclick="toggleExpand('data-${data.timestamp}', this)">Show more</div>` : ''}
+            `;
+            
+            debugContent.appendChild(entry);
+            
+            // Auto-scroll if enabled
+            if (debugAutoScroll) {
+                debugContent.scrollTop = debugContent.scrollHeight;
+            }
+        }
+
+        // Toggle expand/collapse for long debug entries
+        function toggleExpand(dataId, btn) {
+            const dataDiv = document.getElementById(dataId);
+            if (dataDiv.classList.contains('collapsed')) {
+                dataDiv.classList.remove('collapsed');
+                btn.textContent = 'Show less';
+            } else {
+                dataDiv.classList.add('collapsed');
+                btn.textContent = 'Show more';
+            }
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').classList.add('show');
+            const messagesDiv = document.getElementById('chatMessages');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').classList.remove('show');
+        }
+
+        function updateConnectionStatus(message, connected) {
+            const headerStatus = document.getElementById('headerStatus');
+            const statusText = document.getElementById('statusText');
+            const statusDot = document.getElementById('statusDot');
+            const onlineIndicator = document.getElementById('onlineIndicator');
+            
+            headerStatus.textContent = message;
+            statusText.textContent = message;
+            
+            if (connected) {
+                statusDot.classList.add('connected');
+                onlineIndicator.style.display = 'block';
+                isConnected = true;
+                document.getElementById('sendBtn').disabled = false;
+            } else {
+                statusDot.classList.remove('connected');
+                onlineIndicator.style.display = 'none';
+                isConnected = false;
+                document.getElementById('sendBtn').disabled = true;
+            }
+        }
+
+        function showConnectionStatus() {
+            document.getElementById('connectionStatus').classList.add('show');
+        }
+
+        function hideConnectionStatus() {
+            setTimeout(() => {
+                document.getElementById('connectionStatus').classList.remove('show');
+            }, 3000);
+        }
+
+        // Send message to context store
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || !isConnected) return;
+            
+            // Display user message
+            displayMessage(message, 'outgoing');
+            
+            // Clear input
+            input.value = '';
+            adjustTextareaHeight();
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Send to context store
+            try {
+                const response = await fetch(`${CONTEXT_STORE_URL}/contexts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': API_KEY
+                    },
+                    body: JSON.stringify({
+                        context_id: `user_message_${Date.now()}`,
+                        data: { content: message },
+                        namespace: 'user_message',
+                        context_type: 'user_message'
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to send message:', response.status);
+                    hideTypingIndicator();
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                hideTypingIndicator();
+            }
+        }
+
+        // Subscribe to chat messages
+        function subscribeToChatMessages() {
+            const clientId = `chat_client_${Date.now()}`;
+            const wsUrl = `${WEBSOCKET_BASE_URL}/ws/${clientId}`;
+            console.log(`Attempting to connect to WebSocket: ${wsUrl}`);
+            chatWs = new WebSocket(wsUrl);
+            
+            chatWs.onopen = () => {
+                console.log('Connected to context store (chat)');
+                updateConnectionStatus('Connected', true);
+                hideConnectionStatus();
+                
+                // Send subscription message - format for episodic-sdk server
+                const subscribeMessage = {
+                    type: 'subscribe',
+                    namespace: 'send_to_user'  // episodic-sdk expects single namespace string
+                };
+                console.log('Sending subscription message:', subscribeMessage);
+                chatWs.send(JSON.stringify(subscribeMessage));
+            };
+            
+            chatWs.onmessage = (event) => {
+                try {
+                    console.log('📨 Raw WebSocket message received:', event.data);
+                    const data = JSON.parse(event.data);
+                    console.log('📨 Parsed WebSocket message:', data);
+                    
+                    if (data.type === 'subscription_confirmed') {
+                        console.log('✅ Chat subscription confirmed for namespace:', data.namespace);
+                    } else if (data.type === 'context_update') {
+                        console.log('📨 Received context update:', data);
+                        
+                        // The server sends: { type: "context_update", data: { context: {...}, operation: "...", namespace: "...", timestamp: ... } }
+                        const contextData = data.data;
+                        if (contextData && contextData.context) {
+                            console.log('📨 Context object:', contextData.context);
+                            console.log('📨 Context data:', contextData.context.data);
+                            
+                            if (contextData.context.data && contextData.context.data.message) {
+                                hideTypingIndicator();
+                                displayMessage(contextData.context.data.message, 'incoming');
+                            } else {
+                                console.log('⚠️ No message found in context data');
+                            }
+                        } else {
+                            console.log('⚠️ No context found in update data');
+                        }
+                    } else if (data.type === 'error') {
+                        console.error('❌ Server error:', data.message);
+                    } else {
+                        console.log('ℹ️ Unhandled message type:', data.type, data);
+                    }
+                } catch (error) {
+                    console.error('❌ Error parsing chat message:', error);
+                    console.error('❌ Error stack:', error.stack);
+                    console.error('❌ Raw message data:', event.data);
+                    console.error('❌ Message type:', typeof event.data);
+                    console.error('❌ Message length:', event.data ? event.data.length : 'null');
+                }
+            };
+            
+            chatWs.onerror = (error) => {
+                console.error('Chat WebSocket error:', error);
+                console.error('WebSocket readyState:', chatWs.readyState);
+                updateConnectionStatus('Connection error', false);
+                showConnectionStatus();
+            };
+            
+            chatWs.onclose = (event) => {
+                console.log('WebSocket closed. Code:', event.code, 'Reason:', event.reason, 'WasClean:', event.wasClean);
+                updateConnectionStatus('Disconnected', false);
+                showConnectionStatus();
+                
+                // Reconnect after 3 seconds
+                clearTimeout(reconnectTimeout);
+                reconnectTimeout = setTimeout(() => {
+                    console.log('Attempting to reconnect...');
+                    updateConnectionStatus('Reconnecting...', false);
+                    subscribeToChatMessages();
+                }, 3000);
+            };
+        }
+
+        // Subscribe to debug messages
+        function subscribeToDebugMessages() {
+            const clientId = `debug_client_${Date.now()}`;
+            debugWs = new WebSocket(`${WEBSOCKET_BASE_URL}/ws/${clientId}`);
+            
+            debugWs.onopen = () => {
+                console.log('Connected to context store (debug)');
+                
+                // Send subscription message - format for episodic-sdk server
+                const subscribeMessage = {
+                    type: 'subscribe',
+                    namespace: 'scheduler_debug'  // episodic-sdk expects single namespace string
+                };
+                debugWs.send(JSON.stringify(subscribeMessage));
+            };
+            
+            debugWs.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'subscription_confirmed') {
+                        console.log('✅ Debug subscription confirmed for namespace:', data.namespace);
+                    } else if (data.type === 'context_update') {
+                        // The server sends: { type: "context_update", data: { context: {...}, operation: "...", namespace: "...", timestamp: ... } }
+                        const contextData = data.data;
+                        if (contextData && contextData.context && contextData.context.data) {
+                            displayDebugEntry(contextData.context.data);
+                        }
+                    } else if (data.type === 'error') {
+                        console.error('❌ Debug WebSocket server error:', data.message);
+                    } else {
+                        console.log('ℹ️ Unhandled debug message type:', data.type, data);
+                    }
+                } catch (error) {
+                    console.error('Error parsing debug message:', error);
+                    console.error('Raw debug message data:', event.data);
+                }
+            };
+            
+            debugWs.onerror = (error) => {
+                console.error('Debug WebSocket error:', error);
+            };
+            
+            debugWs.onclose = () => {
+                // Reconnect after 3 seconds
+                setTimeout(subscribeToDebugMessages, 3000);
+            };
+        }
+
+        // Test function for debugging - call from browser console
+        window.testWebSocketConnection = function() {
+            console.log('Testing WebSocket connection...');
+            const testUrl = `${WEBSOCKET_BASE_URL}/ws/test_debug_client`;
+            console.log('Test URL:', testUrl);
+            const testWs = new WebSocket(testUrl);
+            
+            testWs.onopen = () => {
+                console.log('✅ Test WebSocket connected successfully!');
+                
+                // Test the subscription message format
+                const testSubscription = {
+                    type: 'subscribe',
+                    namespace: 'send_to_user'
+                };
+                console.log('Sending test subscription:', testSubscription);
+                testWs.send(JSON.stringify(testSubscription));
+            };
+            
+            testWs.onmessage = (event) => {
+                console.log('📨 Test WebSocket received:', event.data);
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'subscription_confirmed') {
+                        console.log('✅ Test subscription confirmed!');
+                        testWs.close();
+                    }
+                } catch (e) {
+                    console.error('Error parsing test message:', e);
+                }
+            };
+            
+            testWs.onerror = (error) => {
+                console.error('❌ Test WebSocket connection failed:', error);
+            };
+            
+            testWs.onclose = (event) => {
+                console.log('Test WebSocket closed. Code:', event.code, 'Reason:', event.reason);
+            };
+        };
+
+        // Test function to check if send button should be enabled
+        window.debugSendButton = function() {
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            console.log('=== Send Button Debug ===');
+            console.log('Input value:', `"${messageInput.value}"`);
+            console.log('Input trimmed:', `"${messageInput.value.trim()}"`);
+            console.log('Has text:', !!messageInput.value.trim());
+            console.log('isConnected:', isConnected);
+            console.log('Send button disabled:', sendBtn.disabled);
+            console.log('Expected disabled state:', !messageInput.value.trim() || !isConnected);
+        };
+
+        function adjustTextareaHeight() {
+            const textarea = document.getElementById('messageInput');
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function sendSuggestion(message) {
+            const messageInput = document.getElementById('messageInput');
+            messageInput.value = message;
+            adjustTextareaHeight();
+            sendMessage();
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            subscribeToChatMessages();
+            subscribeToDebugMessages();
+
+            // Ensure debug panel starts hidden
+            const debugPanel = document.querySelector('.debug-section');
+            debugPanel.classList.remove('open');
+            document.body.classList.remove('debug-open');
+            document.getElementById('toggleDebug').textContent = 'Show Debug';
+            
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            messageInput.addEventListener('input', function() {
+                adjustTextareaHeight();
+                sendBtn.disabled = !this.value.trim() || !isConnected;
+            });
+            
+            messageInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            sendBtn.addEventListener('click', sendMessage);
+            sendBtn.disabled = true;
+            
+            messageInput.focus();
+        });
+    </script>
+</body>
+</html>

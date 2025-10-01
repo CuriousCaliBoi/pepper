@@ -1,0 +1,12 @@
+servers:
+  - name: "tool-worker"
+    command: "python"
+    args: ["-m", "pepper.tool.mcp_servers.worker_mcp_server"]
+    env:
+      OPENAI_API_KEY: "${env:OPENAI_API_KEY}"
+  # - name: "user-profile"
+  #   command: "python"
+  #   args: ["-m", "pepper.tool.mcp_servers.user_profile_mcp_server"]
+  #   env:
+  #     CONTEXT_STORE_ENDPOINT: "${env:CONTEXT_STORE_ENDPOINT}"
+  #     CONTEXT_STORE_API_KEY: "${env:CONTEXT_STORE_API_KEY}"

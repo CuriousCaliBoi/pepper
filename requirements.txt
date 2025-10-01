@@ -1,0 +1,16 @@
+mcp
+wikipedia
+fastmcp
+markitdown
+openai
+mutagen
+markitdown-mcp
+composio
+fastapi
+uvicorn[standard]
+aiohttp
+apscheduler
+langfuse
+anthropic
+websocket-client==1.6.4
+tzlocal
