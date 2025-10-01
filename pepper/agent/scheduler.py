@@ -30,6 +30,25 @@ TOOL_CONFIG_PATH = AGENT_DIR / "tool" / "scheduler_tools.yaml"
 
 MODEL = "gpt-4.1"
 
+class PriorityAsyncQueue:
+    def __init__(self):
+        self._queue = asyncio.PriorityQueue()
+        self._counter = 0
+        self._lock = asyncio.Lock()
+
+    async def put(self, item, priority: int = 0):
+        async with self._lock:
+            self._counter += 1
+            count = self._counter
+        await self._queue.put((priority, count, item))
+
+    async def get(self):
+        _, _, item = await self._queue.get()
+        return item
+
+    def empty(self):
+        return self._queue.empty()
+
 class SchedulerAgent:
     def __init__(self, config_path: str = TOOL_CONFIG_PATH):
         tool_config = load_tools_yaml(config_path)
@@ -45,7 +64,7 @@ class SchedulerAgent:
         self.user_profile_service = UserProfileService(self.cs)
         self.subscriber = ContextSubscriber(self.cs)
 
-        self.event_queue = asyncio.Queue()
+        self.event_queue = PriorityAsyncQueue()
         self.tool_call_queue = asyncio.Queue()
 
         self.state_tracker = SchedulerStateTracker(self.cs)
@@ -105,7 +124,9 @@ class SchedulerAgent:
         print(f"[SCHEDULER] Getting user profile, if this is the first time, it might take a while")
         await self.get_user_profile()
 
-        print(f"[SCHEDULER] Scheduler agent started! Ready to receive messages")
+        print(f"""[SCHEDULER] Scheduler agent started! Ready to receive messages.
+Open the UI in your browser:
+http://localhost:5050/pepper/ui.html""")
         await asyncio.gather(self.tool_call_task(), self.schedule_loop())
 
     async def stop(self):
@@ -146,7 +167,7 @@ class SchedulerAgent:
             tz_name = get_localzone_name()            # e.g., "America/Los_Angeles"
             local_tz = ZoneInfo(tz_name)  
             now_in_zone = datetime.now(local_tz)
-            await self.event_queue.put(UserMessage(content=user_message + f"\n\nUser is in {tz_name}, Current time: {now_in_zone}"))
+            await self.event_queue.put(UserMessage(content=user_message + f"\n\nUser is in {tz_name}, Current time: {now_in_zone}"), priority=-1)
             await self.log_debug(
                 "event_received",
                 {"type": "user_message", "content": update.context.data},

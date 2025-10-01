@@ -4,6 +4,8 @@ import os
 import time
 from datetime import datetime, timezone
 from typing import Dict, Optional, List
+from tzlocal import get_localzone_name
+from zoneinfo import ZoneInfo  # Python 3.9+
 
 from episodic import ContextFilter, ContextStore
 from pepper.constants import AGENT_DIR
@@ -66,8 +68,11 @@ class WorkerAgent:
         state_tracker = WorkerStateTracker(self.cs, agent_name)
         await state_tracker.retrieve_history()
 
-        time_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         past_summary = state_tracker.summary
+        tz_name = get_localzone_name()            # e.g., "America/Los_Angeles"
+        local_tz = ZoneInfo(tz_name)  
+        now_in_zone = datetime.now(local_tz)
+        time_str = now_in_zone.strftime("%Y-%m-%d %H:%M:%S")
         system_prompt = WORKER_SYSTEM_PROMPT
         if past_summary:
             system_prompt += f"\n\nThe past summary is: {past_summary}"
@@ -75,7 +80,7 @@ class WorkerAgent:
 
         await state_tracker.add_event(
             UserMessage(
-                content=request + f"\n\nCurrent time: {time_str} at UTC timezone"
+                content=request + f"\n\nCurrent time: {time_str} at {tz_name} timezone"
             )
         )
 
