@@ -18,24 +18,30 @@ Pepper is a personal AI assistant that proactively works for you. It connects to
 
 ## Setup
 
-**Prerequisites:** Run the Context Store locally before launching Pepper.
-
+First clone the repo:
 ```bash
-cd episodic-sdk
-pip install -r requirements.txt
-pip install -e .[semantic]
+git clone --recurse-submodules https://github.com/agentica-org/pepper
 ```
 
-followed by
-```bash
-episodic serve --port 8000
-```
+**Prerequisites:** Install and run the Context Store locally before launching Pepper.
 
-### Install Dependencies
+
 ```bash
 conda create -n pepper python=3.12 pip -y
 conda activate pepper
+
+# First, install our context store Episodic
+cd episodic-sdk
+pip install -e .[semantic]
+
+# Then, install requirements for Pepper
+cd ../pepper
 pip install -r requirements.txt
+```
+
+followed by:
+```bash
+episodic serve --port 8000
 ```
 
 ### Configure Environment
