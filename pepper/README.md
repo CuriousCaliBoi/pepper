@@ -1,6 +1,23 @@
+<div align="center">
+
 # Pepper
 
-Personal AI assistant for managing tasks and communications.
+</div>
+
+<h3 align="center">
+Your Personal AI Assistant
+</h3>
+
+<p align="center">
+<a href="https://blog.vllm.ai/"><b>Blog</b></a>
+</p>
+
+
+Pepper is a personal AI assistant that proactively works for you. It connects to your Gmail to autonomously summarize important emails and surface critical updates that need your attention, delegating complex tasks to a swarm of workers that handle them seamlessly in the background.
+
+
+
+## Setup
 
 **Prerequisites:** Run the Context Store locally before launching Pepper.
 
@@ -13,8 +30,6 @@ followed by
 ```bash
 episodic serve --port 8000
 ```
-
-## Setup
 
 ### Install Dependencies
 ```bash
@@ -30,11 +45,10 @@ pip install -r requirements.txt
    cp env_var.example.sh env_var.sh
    ```
 
-2. Set up Composio (required for Gmail):
+2. Set up Composio (required):
    - Sign in at [composio.dev](https://composio.dev)
-   - Create an API key
-   - Set up Gmail integration and get your auth config ID
-   - Fill in `COMPOSIO_API_KEY`
+   - Create an Project API key
+   - Fill in it as `COMPOSIO_API_KEY`
    
 3. Fill in `OPENAI_API_KEY` (required)
 
@@ -58,7 +72,7 @@ Launch all services (The first time you run this, it'll take a while to build yo
 python -m pepper.launch_pepper
 ```
 
-Open the UI in your browser:
+Open the UI in your browser as prompted:
 ```
 http://localhost:5050/pepper/ui.html
 ```
