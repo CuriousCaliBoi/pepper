@@ -5,12 +5,8 @@
 </div>
 
 <h3 align="center">
-Your Personal AI Assistant
+Your Personal AI Assistant (<a href="https://agentica-project.com/post.html?post=pepper.md"><b>Blog</b></a>)
 </h3>
-
-<p align="center">
-<a href="https://blog.vllm.ai/"><b>Blog</b></a>
-</p>
 
 Pepper is a personal AI assistant that proactively works for you. It connects to your Gmail to autonomously summarize important emails and surface critical updates that need your attention, delegating complex tasks to a swarm of workers that handle them seamlessly in the background.
 
@@ -44,6 +40,8 @@ followed by:
 episodic serve --port 8000
 ```
 
+Keep the process running, and open a new terminal for the following setup.
+
 ### Configure Environment
 1. Copy the environment template:
    ```bash
@@ -66,14 +64,16 @@ episodic serve --port 8000
 5. Login your Gmail account and grant access [Only for the first time]:
 
    ```bash
+   cd ~/pepper
    python -m pepper.services.email_service
    ```
-   If you see the message "Please authorize Gmail by visiting: <url>", open the url in your browser and grant access.
-   If you see the message "✅ Trigger subscribed successfully.", you're good to go. Ctrl+C to stop the process.
+   If you see the message "Please authorize Gmail by visiting: url", open the url in your browser and grant access.
+
+   Once you've see the message "✅ Trigger subscribed successfully.", Ctrl+C to stop the process, you're good to go!
 
 ## Running Pepper
 
-Launch all services (The first time you run this, it'll take a while to build your profile, approximately 1 minute):
+Launch pepper (The first time you run this, it'll take a while to build your profile, approximately 1 minute):
 ```bash
 python -m pepper.launch_pepper
 ```
