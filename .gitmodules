@@ -1,0 +1,3 @@
+[submodule "episodic-sdk"]
+	path = episodic-sdk
+	url = https://github.com/agentica-org/episodic-sdk

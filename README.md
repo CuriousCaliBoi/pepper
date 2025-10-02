@@ -12,7 +12,6 @@ Your Personal AI Assistant
 <a href="https://blog.vllm.ai/"><b>Blog</b></a>
 </p>
 
-
 Pepper is a personal AI assistant that proactively works for you. It connects to your Gmail to autonomously summarize important emails and surface critical updates that need your attention, delegating complex tasks to a swarm of workers that handle them seamlessly in the background.
 
 
@@ -24,6 +23,7 @@ Pepper is a personal AI assistant that proactively works for you. It connects to
 ```bash
 cd episodic-sdk
 pip install -r requirements.txt
+pip install -e .[semantic]
 ```
 
 followed by
@@ -80,3 +80,6 @@ http://localhost:5050/pepper/ui.html
 If you're in the remote server, vscode should be able to port forward the correct port to your local machine automatically.
 
 **Note:** Press Ctrl+C to stop all services.
+
+## Acknowledgement
+This work is done with the [Agentica](https://agentica-project.com/index.html) Team as part of [Berkeley Sky Computing Lab](https://sky.cs.berkeley.edu/). 
