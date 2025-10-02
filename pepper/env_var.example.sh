@@ -22,6 +22,11 @@ export OPENAI_API_KEY="your-openai-api-key"
 # Composio (tool auth for Gmail/Calendar/etc.)
 export COMPOSIO_API_KEY="your-composio-api-key"
 
+# ============================================================================
+# Recommended (safe defaults or leave blank)
+# ============================================================================
+
+export SERPER_API_KEY="" # for google search
 
 # ============================================================================
 # Optional (safe defaults or leave blank)
@@ -31,7 +36,6 @@ export CONTEXT_STORE_ENDPOINT="http://localhost:8000"
 export CONTEXT_STORE_API_KEY="your-context-store-api-key"
 
 # --- Optional search providers (used by searching tools) ---
-export SERPER_API_KEY=""
 export JINA_API_KEY=""
 
 # --- Optional: Anthropic (if you enable Anthropic models) ---
