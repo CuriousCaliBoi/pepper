@@ -54,14 +54,23 @@ Keep the process running, and open a new terminal for the following setup.
    - Create an Project API key
    - Fill in it as `COMPOSIO_API_KEY`
    
-3. Fill in `OPENAI_API_KEY` (required)
+3. Fill in your LLM API key (required):
+   - For OpenAI (default): Set `OPENAI_API_KEY`
+   - For Anthropic: Set `ANTHROPIC_API_KEY`
 
-4. Load environment variables:
+4. Configure LLM provider (optional):
+   - By default, Pepper uses OpenAI models
+   - To use Anthropic models:
+     - Add to your `env_var.sh`: `export LLM_PROVIDER="anthropic"`
+     - Update the `MODEL` variable in `pepper/agent/scheduler.py`, `pepper/agent/worker.py`, and `pepper/agent/workflow.py`
+     - Example: `MODEL = "claude-sonnet-4-5-20250929"`
+
+5. Load environment variables:
    ```bash
    source env_var.sh
    ```
 
-5. Login your Gmail account and grant access [Only for the first time]:
+6. Login your Gmail account and grant access [Only for the first time]:
 
    ```bash
    cd ~/pepper
